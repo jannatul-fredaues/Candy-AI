@@ -125,7 +125,6 @@ body {
     padding: 0 16px;
 }
 
-/* Input */
 .chat-bar input {
     flex: 1;
     background: transparent;
@@ -140,7 +139,6 @@ body {
     color: #a5a5ff;
 }
 
-/* Icons */
 .icons {
     display: flex;
     gap: 14px;
@@ -158,7 +156,6 @@ body {
     text-shadow: 0 0 8px #b366ff;
 }
 
-/* ================= ANIMATION ================= */
 @keyframes rotate {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -179,12 +176,12 @@ body {
         </div>
     </div>
 
-    <div class="prompt">Ask me anything</div>
+    <div class="prompt">Say "Candy" or type a command</div>
 
     <div class="chat-bar">
         <input type="text" placeholder="Type here..." />
         <div class="icons">
-            <i class="fa-solid fa-microphone"></i>
+            <i class="fa-solid fa-microphone" id="mic"></i>
             <i class="fa-regular fa-comment-dots"></i>
             <i class="fa-solid fa-gear"></i>
         </div>
@@ -193,18 +190,56 @@ body {
 </div>
 
 <script>
-    const input = document.querySelector(".chat-bar input");
-    const prompt = document.querySelector(".prompt");
+const input = document.querySelector(".chat-bar input");
+const prompt = document.querySelector(".prompt");
+const micBtn = document.getElementById("mic");
 
-    input.addEventListener("focus", () => {
-        prompt.classList.add("hide");
-    });
+// Hide prompt on focus
+input.addEventListener("focus", () => {
+    prompt.classList.add("hide");
+});
 
-    input.addEventListener("blur", () => {
-        if (input.value.trim() === "") {
-            prompt.classList.remove("hide");
-        }
+input.addEventListener("blur", () => {
+    if (input.value.trim() === "") {
+        prompt.classList.remove("hide");
+    }
+});
+
+// ================= VOICE RECOGNITION =================
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const recognition = new SpeechRecognition();
+recognition.lang = "en-US";
+recognition.continuous = false;
+
+micBtn.addEventListener("click", () => {
+    recognition.start();
+});
+
+recognition.onresult = async (event) => {
+    const text = event.results[0][0].transcript.toLowerCase();
+    input.value = text;
+    sendToBackend(text);
+};
+
+// ================= SEND TO BACKEND =================
+async function sendToBackend(text) {
+    await fetch("http://127.0.0.1:5000/command", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
     });
+}
+
+// ================= TEXT COMMAND =================
+input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        const text = input.value;
+        input.value = "";
+        sendToBackend(text);
+    }
+});
 </script>
 
 </body>
