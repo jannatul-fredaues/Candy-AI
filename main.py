@@ -1,108 +1,61 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, Response
 from flask_cors import CORS
-import pyttsx3
-import datetime
-import webbrowser
+from openai import OpenAI
 import os
+import json
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = Flask(__name__)
 CORS(app)
 
-# ================= VOICE OUTPUT =================
-engine = pyttsx3.init()
-engine.setProperty("rate", 170)
+conversation = [
+    {
+        "role": "system",
+        "content": (
+            "You are CALEB, a professional, intelligent AI assistant. "
+            "You explain clearly, think step by step when needed, "
+            "and respond like ChatGPT."
+        )
+    }
+]
 
-def speak(text):
-    engine.say(text)
-    engine.runAndWait()
+def stream_reply(user_text):
+    conversation.append({"role": "user", "content": user_text})
 
-# ================= ASSISTANT STATE =================
-assistant_awake = False
-conversation_memory = []
+    stream = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=conversation,
+        stream=True,
+        temperature=0.7,
+        max_tokens=400
+    )
 
-# ================= COMMAND HANDLER =================
-def handle_command(text):
-    global assistant_awake
+    full_reply = ""
 
-    # TIME
-    if "time" in text:
-        return f"The time is {datetime.datetime.now().strftime('%I:%M %p')}"
+    for chunk in stream:
+        delta = chunk.choices[0].delta
+        if delta and delta.content:
+            token = delta.content
+            full_reply += token
+            yield f"data: {json.dumps({'token': token})}\n\n"
 
-    # DATE
-    if "date" in text:
-        return f"Today is {datetime.datetime.now().strftime('%A, %d %B %Y')}"
+    conversation.append({"role": "assistant", "content": full_reply})
+    yield f"data: {json.dumps({'done': True})}\n\n"
 
-    # OPEN WEBSITES
-    if "open google" in text:
-        webbrowser.open("https://google.com")
-        return "Opening Google"
+@app.route("/chat-stream", methods=["POST"])
+def chat_stream():
+    data = request.get_json()
+    user_text = data.get("text", "").strip()
 
-    if "open youtube" in text:
-        webbrowser.open("https://youtube.com")
-        return "Opening YouTube"
+    if not user_text:
+        return Response("Empty message", status=400)
 
-    # SYSTEM COMMANDS
-    if "shutdown" in text:
-        return "Shutdown command received. Permission required."
+    return Response(
+        stream_reply(user_text),
+        mimetype="text/event-stream"
+    )
 
-    if "restart" in text:
-        return "Restart command received. Permission required."
-
-    # MEMORY
-    if "what did i say" in text:
-        if conversation_memory:
-            return "You said: " + ", ".join(conversation_memory[-3:])
-        return "You haven't said anything yet"
-
-    # FALLBACK (AI READY)
-    return "I heard you, master, but I need more training for that."
-
-# ================= API ENDPOINT =================
-@app.route("/command", methods=["POST"])
-def command():
-    global assistant_awake
-
-    data = request.json
-    text = data.get("text", "").lower().strip()
-
-    print("USER:", text)
-
-    if not text:
-        return jsonify({"reply": "No input received", "awake": assistant_awake})
-
-    conversation_memory.append(text)
-
-    # WAKE WORD
-    if "candy" in text and not assistant_awake:
-        assistant_awake = True
-        reply = "Hi master"
-        speak(reply)
-        return jsonify({"reply": reply, "awake": assistant_awake})
-
-    # IGNORE COMMANDS IF SLEEPING
-    if not assistant_awake:
-        return jsonify({
-            "reply": "Say 'Candy' to wake me up",
-            "awake": assistant_awake
-        })
-
-    # HANDLE COMMAND
-    reply = handle_command(text)
-    speak(reply)
-
-    # GO BACK TO SLEEP
-    assistant_awake = False
-
-    return jsonify({
-        "reply": reply,
-        "awake": assistant_awake
-    })
-
-# ================= HOME (OPTIONAL) =================
-@app.route("/")
-def home():
-    return "Candy backend is running"
-
-# ================= RUN =================
 if __name__ == "__main__":
-    app.run(debug=True)
+    print("CALEB streaming backend running at http://127.0.0.1:5000")
+    app.run(debug=True, threaded=True)
