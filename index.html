@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CANDY</title>
+<title>CALEB</title>
 
-<!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
@@ -32,7 +31,7 @@ body {
 .hud {
     position: absolute;
     top: 35%;
-    left: 50%;
+    left: 45%;
     transform: translate(-50%, -50%);
     width: 220px;
     height: 220px;
@@ -46,11 +45,7 @@ body {
     animation: rotate 10s linear infinite;
 }
 
-.ring.outer {
-    width: 220px;
-    height: 220px;
-}
-
+.ring.outer { width: 220px; height: 220px; }
 .ring.middle {
     width: 170px;
     height: 170px;
@@ -60,7 +55,6 @@ body {
     animation-duration: 6s;
     animation-direction: reverse;
 }
-
 .ring.inner {
     width: 120px;
     height: 120px;
@@ -94,32 +88,79 @@ body {
 /* ================= PROMPT ================= */
 .prompt {
     position: absolute;
-    bottom: 120px;
+    bottom: 145px;
     width: 100%;
     text-align: center;
     font-size: 18px;
     opacity: 0.9;
-    transition: transform 0.6s ease, opacity 0.6s ease;
 }
 
-.prompt.hide {
-    transform: translateX(200px);
-    opacity: 0;
+/* ================= CHAT OUTPUT ================= */
+.chat-output {
+    position: absolute;
+    bottom: 150px;
+    left: 45%;
+    transform: translateX(-50%);
+    width: 65%;
+    max-width: 750px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.message {
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.user { color: #c7b7ff; }
+.assistant { color: #9eeaff; }
+
+/* ================= SUGGESTIONS ================= */
+.suggestions {
+    position: absolute;
+    bottom: 95px;
+    left: 45%;
+    transform: translateX(-50%);
+    width: 65%;
+    max-width: 750px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.suggestion {
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 18px;
+    cursor: pointer;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(0,200,255,0.6);
+    color: #bff3ff;
+    transition: 0.3s;
+}
+
+.suggestion:hover {
+    background: rgba(0,200,255,0.2);
+    box-shadow: 0 0 12px rgba(0,200,255,0.9);
+    transform: translateY(-2px);
 }
 
 /* ================= CHAT BAR ================= */
 .chat-bar {
     position: absolute;
     bottom: 30px;
-    left: 50%;
+    left: 45%;
     transform: translateX(-50%);
-    width: 70%;
+    width: 65%;
     max-width: 750px;
     height: 50px;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(0,0,0,0.35);
     border-radius: 30px;
-    border: 1px solid rgba(140, 0, 255, 0.8);
-    box-shadow: 0 0 12px rgba(140, 0, 255, 0.9);
+    border: 1px solid rgba(140,0,255,0.8);
+    box-shadow: 0 0 12px rgba(140,0,255,0.9);
     display: flex;
     align-items: center;
     padding: 0 16px;
@@ -139,39 +180,50 @@ body {
     color: #a5a5ff;
 }
 
-.icons {
+/* ================= HISTORY PANEL ================= */
+.history-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 260px;
+    height: 100%;
+    background: rgba(5,15,30,0.95);
+    border-left: 1px solid rgba(0,200,255,0.2);
     display: flex;
-    gap: 14px;
+    flex-direction: column;
 }
 
-.icons i {
-    font-size: 18px;
-    color: #e5e5ff;
+.history-header {
+    padding: 16px;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.new-chat {
+    margin: 10px;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #00c8ff;
+    background: transparent;
+    color: #00c8ff;
     cursor: pointer;
-    transition: 0.3s;
 }
 
-.icons i:hover {
-    color: #b366ff;
-    text-shadow: 0 0 8px #b366ff;
+.history {
+    flex: 1;
+    overflow-y: auto;
 }
 
-/* ================= LISTENING ANIMATION ================= */
-.listening .ring {
-    animation: pulse 1.2s ease-in-out infinite;
-    border-color: #ff4dff;
-    box-shadow: 0 0 25px #ff4dff;
+.history-item {
+    padding: 12px;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-.listening .core {
-    box-shadow: 0 0 35px #ff4dff;
-    background: rgba(255, 77, 255, 0.25);
-}
-
-@keyframes pulse {
-    0% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.08) rotate(180deg); }
-    100% { transform: scale(1) rotate(360deg); }
+.history-item:hover,
+.history-item.active {
+    background: rgba(0,200,255,0.15);
 }
 
 @keyframes rotate {
@@ -185,83 +237,130 @@ body {
 
 <div class="container">
 
-    <div class="hud" id="hud">
+    <!-- HUD -->
+    <div class="hud">
         <div class="ring outer"></div>
         <div class="ring middle"></div>
         <div class="ring inner"></div>
-        <div class="core">
-            <span>CANDY</span>
-        </div>
+        <div class="core"><span>CALEB</span></div>
     </div>
 
-    <div class="prompt">Say "Candy" or type a command</div>
+    <div class="prompt">Ask CALEB anything</div>
+
+    <div class="chat-output" id="chat"></div>
+
+    <!-- Suggestions -->
+    <div class="suggestions" id="suggestions">
+        <div class="suggestion">Explain AI in simple terms</div>
+        <div class="suggestion">Give me Python project ideas</div>
+        <div class="suggestion">Help me debug my code</div>
+        <div class="suggestion">Create a study roadmap</div>
+    </div>
 
     <div class="chat-bar">
-        <input type="text" placeholder="Type here..." />
-        <div class="icons">
-            <i class="fa-solid fa-microphone" id="mic"></i>
-            <i class="fa-regular fa-comment-dots"></i>
-            <i class="fa-solid fa-gear"></i>
-        </div>
+        <input type="text" id="input" placeholder="Message CALEB..." />
+    </div>
+
+    <!-- History -->
+    <div class="history-panel">
+        <div class="history-header">History</div>
+        <button class="new-chat" onclick="newChat()">+ New Chat</button>
+        <div class="history" id="history"></div>
     </div>
 
 </div>
 
 <script>
-const input = document.querySelector(".chat-bar input");
-const prompt = document.querySelector(".prompt");
-const micBtn = document.getElementById("mic");
-const hud = document.getElementById("hud");
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const historyEl = document.getElementById("history");
+const suggestions = document.getElementById("suggestions");
 
-/* Prompt hide/show */
-input.addEventListener("focus", () => prompt.classList.add("hide"));
-input.addEventListener("blur", () => {
-    if (input.value.trim() === "") prompt.classList.remove("hide");
-});
+let chats = JSON.parse(localStorage.getItem("caleb_chats")) || [];
+let current = chats.length ? chats.length - 1 : createChat();
 
-/* ================= VOICE RECOGNITION ================= */
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+function createChat() {
+    chats.push({ title: "New Chat", messages: [] });
+    save();
+    renderHistory();
+    return chats.length - 1;
+}
 
-const recognition = new SpeechRecognition();
-recognition.lang = "en-US";
-recognition.continuous = false;
+function newChat() {
+    current = createChat();
+    chat.innerHTML = "";
+    suggestions.style.display = "flex";
+}
 
-/* Start listening */
-micBtn.addEventListener("click", () => {
-    recognition.start();
-    hud.classList.add("listening");
-});
+function save() {
+    localStorage.setItem("caleb_chats", JSON.stringify(chats));
+}
 
-/* Voice result */
-recognition.onresult = (event) => {
-    const text = event.results[0][0].transcript.toLowerCase();
-    input.value = text;
-    sendToBackend(text);
-};
-
-/* Stop animation */
-recognition.onend = () => {
-    hud.classList.remove("listening");
-};
-
-/* ================= SEND TO BACKEND ================= */
-function sendToBackend(text) {
-    fetch("http://127.0.0.1:5000/command", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text })
+function renderHistory() {
+    historyEl.innerHTML = "";
+    chats.forEach((c, i) => {
+        const div = document.createElement("div");
+        div.className = "history-item" + (i === current ? " active" : "");
+        div.textContent = c.title;
+        div.onclick = () => {
+            current = i;
+            renderChat();
+            renderHistory();
+        };
+        historyEl.appendChild(div);
     });
 }
 
-/* ================= TEXT INPUT ================= */
-input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
+function renderChat() {
+    chat.innerHTML = "";
+    chats[current].messages.forEach(m => {
+        const div = document.createElement("div");
+        div.className = `message ${m.role}`;
+        div.textContent = `${m.role === "user" ? "You" : "CALEB"}: ${m.content}`;
+        chat.appendChild(div);
+    });
+    chat.scrollTop = chat.scrollHeight;
+}
+
+document.querySelectorAll(".suggestion").forEach(item => {
+    item.onclick = () => {
+        input.value = item.textContent;
+        input.focus();
+    };
+});
+
+input.addEventListener("keydown", async e => {
+    if (e.key === "Enter" && input.value.trim()) {
         const text = input.value;
         input.value = "";
-        sendToBackend(text);
+
+        chats[current].messages.push({ role: "user", content: text });
+        if (chats[current].messages.length === 1) {
+            chats[current].title = text.slice(0, 18);
+            suggestions.style.display = "none";
+        }
+
+        renderChat();
+        save();
+        renderHistory();
+
+        const res = await fetch("http://127.0.0.1:5000/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text })
+        });
+
+        const data = await res.json();
+        chats[current].messages.push({ role: "assistant", content: data.content });
+        renderChat();
+        save();
     }
 });
+
+
+
+renderHistory();
+renderChat();
 </script>
 
 </body>
