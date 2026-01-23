@@ -1,34 +1,42 @@
 from flask import Flask, request, Response
 from flask_cors import CORS
 from openai import OpenAI
+from mode_router import detect_mode, get_system_prompt
+from context import trim_conversation
 import os
 import json
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("api_key"))
 
 app = Flask(__name__)
 CORS(app)
 
-conversation = [
-    {
-        "role": "system",
-        "content": (
-            "You are CALEB, a professional, intelligent AI assistant. "
-            "You explain clearly, think step by step when needed, "
-            "and respond like ChatGPT."
-        )
-    }
-]
+conversation = []
 
-def stream_reply(user_text):
+def stream_llm(user_text):
+    global conversation
+
+    # Auto-detect mode
+    mode = detect_mode(user_text)
+
+    # Initialize system prompt
+    if not conversation:
+        conversation.append({
+            "role": "system",
+            "content": get_system_prompt(mode)
+        })
+
     conversation.append({"role": "user", "content": user_text})
+
+    # Trim context
+    conversation = trim_conversation(conversation)
 
     stream = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=conversation,
         stream=True,
         temperature=0.7,
-        max_tokens=400
+        max_tokens=500
     )
 
     full_reply = ""
@@ -41,7 +49,9 @@ def stream_reply(user_text):
             yield f"data: {json.dumps({'token': token})}\n\n"
 
     conversation.append({"role": "assistant", "content": full_reply})
-    yield f"data: {json.dumps({'done': True})}\n\n"
+
+    yield f"data: {json.dumps({'done': True, 'mode': mode})}\n\n"
+
 
 @app.route("/chat-stream", methods=["POST"])
 def chat_stream():
@@ -49,13 +59,20 @@ def chat_stream():
     user_text = data.get("text", "").strip()
 
     if not user_text:
-        return Response("Empty message", status=400)
+        return Response("Empty input", status=400)
 
     return Response(
-        stream_reply(user_text),
+        stream_llm(user_text),
         mimetype="text/event-stream"
     )
 
+
+@app.route("/reset", methods=["POST"])
+def reset():
+    conversation.clear()
+    return {"status": "conversation reset"}
+
+
 if __name__ == "__main__":
-    print("CALEB streaming backend running at http://127.0.0.1:5000")
+    print("CALEB backend running on http://127.0.0.1:5000")
     app.run(debug=True, threaded=True)
