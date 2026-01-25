@@ -452,7 +452,7 @@ function sendMessage() {
         beep.currentTime = 0;
         beep.volume = 0.4;
         beep.play();
-    fetch("http://127.0.0.1:5000/chat", {
+   fetch("http://127.0.0.1:5000/chat-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text })
