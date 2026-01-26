@@ -1,0 +1,5 @@
+How do you control assistant behavior?”
+
+1. “I implemented a mode-based prompt routing system where each interaction uses a dedicated system prompt depending on user intent, such as tutoring, coding, or research.”
+
+2. “I implemented an automatic mode detection layer using a lightweight LLM classifier that dynamically selects the assistant’s system prompt before response generation.”
